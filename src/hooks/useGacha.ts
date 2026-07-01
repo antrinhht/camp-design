@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useTracking } from './useTracking';
+
 import type { ThemeType } from '../components/ThemeSelector'; // Sẽ cập nhật kiểu ThemeType sau
 
 export type GachaRarity = 'Normal' | 'Rare' | 'SR' | 'SSR' | 'UR' | 'Legendary';
@@ -24,7 +24,6 @@ export const GACHA_POOL: Record<ThemeType, GachaItem> = {
 };
 
 export const useGacha = () => {
-  const { trackEvent } = useTracking();
   const [totalRolls, setTotalRolls] = useState<number>(0);
   const [unlockedThemes, setUnlockedThemes] = useState<ThemeType[]>(['memphis']);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -58,7 +57,6 @@ export const useGacha = () => {
   const roll = (multiplier: number = 1): { items: GachaItem[], isNew: boolean } => {
     const newTotal = totalRolls + multiplier;
     setTotalRolls(newTotal);
-    trackEvent('chest_rolled', { multiplier, currentTotal: newTotal });
 
     let highestRarityItem: GachaItem = GACHA_POOL['memphis'];
     let gotNewItem = false;
@@ -105,9 +103,6 @@ export const useGacha = () => {
       gotNewItem = true;
       const updatedThemes = [...new Set([...unlockedThemes, ...newlyUnlocked])];
       setUnlockedThemes(updatedThemes);
-      newlyUnlocked.forEach(theme => {
-        trackEvent('theme_unlocked', { theme, rolls_taken: newTotal });
-      });
     }
 
     // Trả về mảng 1 item đại diện cho kết quả cao nhất (để làm animation)

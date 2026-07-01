@@ -49,22 +49,39 @@ function App() {
     // Timeout để DOM cập nhật trạng thái
     setTimeout(async () => {
       const element = document.getElementById('screenshot-area');
-      if (!element) {
+      const container = containerRef.current;
+      if (!element || !container) {
         setIsCapturing(false);
         return;
       }
       
       try {
+        const originalTransform = element.style.transform;
+        const originalTransition = element.style.transition;
+        const originalContainerWidth = container.style.width;
+        const originalContainerHeight = container.style.height;
+
+        element.style.transition = 'none';
+        element.style.transform = 'scale(1)';
+        container.style.width = '700px';
+        container.style.height = '1110px';
+
+        // Đợi DOM áp dụng layout mới
+        await new Promise(r => setTimeout(r, 100));
+
         const dataUrl = await htmlToImage.toPng(element, { 
           pixelRatio: 2, 
           backgroundColor: '#000000',
-          style: {
-            transform: 'none',
-          },
           width: 700,
           height: 1110
         });
         
+        // Trả lại DOM như cũ
+        element.style.transform = originalTransform;
+        element.style.transition = originalTransition;
+        container.style.width = originalContainerWidth;
+        container.style.height = originalContainerHeight;
+
         if (dataUrl) {
           try {
             const link = document.createElement('a');

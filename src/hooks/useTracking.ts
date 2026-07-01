@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-// Mock Tracking Hook - Có thể thay thế bằng PostHog hoặc GA4 sau này
+// Hook theo dõi thao tác người dùng (Gửi thẳng lên Vercel Serverless Function -> Upstash Redis)
 export const useTracking = () => {
   useEffect(() => {
     // Khởi tạo tracking session
@@ -11,16 +11,24 @@ export const useTracking = () => {
     }
   }, []);
 
-  const trackEvent = (eventName: string, properties?: any) => {
-    // In môi trường thật, ở đây sẽ gọi posthog.capture() hoặc gtag()
+  const trackEvent = async (eventName: string, properties?: any) => {
     console.log(`[TRACKING] Event: ${eventName}`, properties);
     
-    // Lưu lịch sử vào local storage cho mục đích debug (tùy chọn)
-    const logs = JSON.parse(localStorage.getItem('tracking_logs') || '[]');
-    logs.push({ eventName, properties, time: new Date().toISOString() });
-    // Giới hạn log để không tràn bộ nhớ
-    if (logs.length > 100) logs.shift();
-    localStorage.setItem('tracking_logs', JSON.stringify(logs));
+    // Gửi log về Backend API (Vercel Serverless Function)
+    try {
+      await fetch('/api/track', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          eventName,
+          properties
+        })
+      });
+    } catch (e) {
+      console.error('Failed to send tracking event', e);
+    }
   };
 
   return { trackEvent };

@@ -6,28 +6,25 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { eventName, properties } = req.body || {};
+    const { action, device, theme, seconds } = req.body || {};
     
     // Lấy thông tin thiết bị và IP (Vercel tự động cung cấp qua headers)
     const ip = req.headers['x-real-ip'] || req.headers['x-forwarded-for'] || 'unknown';
-    const userAgent = req.headers['user-agent'] || 'unknown';
-    const country = req.headers['x-vercel-ip-country'] || 'unknown';
-    const city = req.headers['x-vercel-ip-city'] || 'unknown';
 
-    const logEntry = {
-      eventName,
-      properties,
-      ip,
-      userAgent,
-      country,
-      city,
-      time: new Date().toISOString()
-    };
-
-    // Đẩy log mới nhất lên đầu danh sách (List)
-    await kv.lpush('tracking_logs', JSON.stringify(logEntry));
-    // Chỉ giữ lại 1000 bản ghi mới nhất để tránh đầy bộ nhớ
-    await kv.ltrim('tracking_logs', 0, 999);
+    if (action === 'session_start') {
+      // SADD trả về 1 nếu IP mới, 0 nếu đã tồn tại
+      const added = await kv.sadd('unique_visitors', ip);
+      if (added === 1 && device) {
+        await kv.hincrby('device_stats', device, 1);
+      }
+    } else if (action === 'roll') {
+      await kv.incr('total_rolls');
+      if (theme) {
+        await kv.hincrby('theme_unlocks', theme, 1);
+      }
+    } else if (action === 'ping') {
+      await kv.incrby('total_time_spent', seconds || 0);
+    }
 
     return res.status(200).json({ success: true });
   } catch (error) {

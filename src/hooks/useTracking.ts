@@ -1,35 +1,61 @@
 import { useEffect } from 'react';
 
-// Hook theo dõi thao tác người dùng (Gửi thẳng lên Vercel Serverless Function -> Upstash Redis)
+const getDeviceType = () => {
+  const ua = navigator.userAgent;
+  if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+    return 'Tablet';
+  }
+  if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
+    return 'Mobile';
+  }
+  return 'Desktop';
+};
+
+// Hook theo dõi thao tác người dùng (Gửi tổng hợp lên Vercel Serverless Function -> Upstash Redis)
 export const useTracking = () => {
   useEffect(() => {
-    // Khởi tạo tracking session
-    const startTime = localStorage.getItem('session_start') || Date.now().toString();
-    if (!localStorage.getItem('session_start')) {
-      localStorage.setItem('session_start', startTime);
-      trackEvent('session_start', { timestamp: startTime });
+    const sendEvent = async (payload: any) => {
+      try {
+        await fetch('/api/track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (e) {
+        console.error('Failed to send tracking event', e);
+      }
+    };
+
+    // 1. Theo dõi lượt truy cập unique và loại thiết bị
+    const hasStarted = sessionStorage.getItem('session_start');
+    if (!hasStarted) {
+      sessionStorage.setItem('session_start', 'true');
+      sendEvent({ action: 'session_start', device: getDeviceType() });
     }
+
+    // 2. Theo dõi thời gian trên trang (Ping mỗi 10 giây)
+    const pingInterval = setInterval(() => {
+      sendEvent({ action: 'ping', seconds: 10 });
+    }, 10000);
+
+    return () => clearInterval(pingInterval);
   }, []);
 
-  const trackEvent = async (eventName: string, properties?: any) => {
-    console.log(`[TRACKING] Event: ${eventName}`, properties);
-    
-    // Gửi log về Backend API (Vercel Serverless Function)
+  // 3. Theo dõi lượt quay thẻ bài
+  const trackRoll = async (themeRolled: string) => {
     try {
       await fetch('/api/track', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          eventName,
-          properties
+          action: 'roll',
+          theme: themeRolled
         })
       });
     } catch (e) {
-      console.error('Failed to send tracking event', e);
+      console.error('Failed to track roll', e);
     }
   };
 
-  return { trackEvent };
+  return { trackRoll };
 };

@@ -9,9 +9,10 @@ interface GachaDashboardProps {
   setTheme: (t: ThemeType) => void;
   onRollAction?: () => void;
   onViewCard?: () => void; // Bật Bottom Sheet / Modal
+  trackRoll?: (theme: string) => void;
 }
 
-export const GachaDashboard = ({ theme, setTheme, onRollAction, onViewCard }: GachaDashboardProps) => {
+export const GachaDashboard = ({ theme, setTheme, onRollAction, onViewCard, trackRoll }: GachaDashboardProps) => {
   const { totalRolls, unlockedThemes, roll, isInitialized } = useGacha();
   const [rollPhase, setRollPhase] = useState<0 | 1 | 2 | 3>(0);
   const [recentDrop, setRecentDrop] = useState<GachaItem | null>(null);
@@ -33,6 +34,9 @@ export const GachaDashboard = ({ theme, setTheme, onRollAction, onViewCard }: Ga
       const droppedItem = result.items[0];
       setRecentDrop(droppedItem);
       setTheme(droppedItem.id);
+      
+      // Gửi tracking
+      if (trackRoll) trackRoll(droppedItem.id);
 
       if (result.isNew) {
         confetti({

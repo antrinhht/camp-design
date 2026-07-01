@@ -10,6 +10,7 @@ import type { ThemeType } from './components/ThemeSelector'
 import { NavigationBar } from './components/NavigationBar'
 import { GACHA_POOL } from './hooks/useGacha'
 import { AdminDashboard } from './components/AdminDashboard'
+import { useTracking } from './hooks/useTracking'
 
 const slideVariants = {
   enter: (direction: number) => ({
@@ -164,6 +165,9 @@ function App() {
     return <AdminDashboard />;
   }
 
+  // Khởi tạo tracking (chỉ chạy khi không phải admin)
+  const { trackRoll } = useTracking();
+
   return (
     <div className={`fixed inset-0 bg-gray-950 flex flex-col lg:flex-row lg:items-start lg:justify-center p-0 lg:py-12 lg:px-8 lg:gap-12 overflow-y-auto overflow-x-hidden ${isShaking ? 'animate-shake' : ''}`}>
       
@@ -192,7 +196,8 @@ function App() {
           theme={theme} 
           setTheme={setTheme} 
           onRollAction={handleRollAction} 
-          onViewCard={() => setShowCardModal(true)} 
+          onViewCard={() => setShowCardModal(true)}
+          trackRoll={trackRoll}
         />
       </div>
 

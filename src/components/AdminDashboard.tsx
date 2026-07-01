@@ -1,98 +1,95 @@
 import { useState, useEffect } from 'react';
 
 export const AdminDashboard = () => {
-  const [logs, setLogs] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchLogs = async () => {
+    const fetchStats = async () => {
       try {
-        const res = await fetch('/api/logs');
+        const res = await fetch('/api/stats');
         const data = await res.json();
-        setLogs(data);
+        setStats(data);
       } catch (err) {
-        console.error('Failed to fetch logs', err);
+        console.error('Failed to fetch stats', err);
       } finally {
         setLoading(false);
       }
     };
     
-    fetchLogs();
-    
-    // Auto refresh every 10 seconds
-    const interval = setInterval(fetchLogs, 10000);
+    fetchStats();
+    const interval = setInterval(fetchStats, 10000);
     return () => clearInterval(interval);
   }, []);
 
+  if (!stats && loading) return <div className="min-h-screen bg-gray-950 text-white p-8 flex justify-center items-center">Đang tải dữ liệu...</div>;
+  if (!stats) return <div className="min-h-screen bg-gray-950 text-white p-8 flex justify-center items-center text-red-400">Lỗi không tải được dữ liệu</div>;
+
+  const totalTimeInMinutes = Math.floor((stats.totalTimeSpent || 0) / 60);
+
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8 border-b border-gray-800 pb-4">
-          <h1 className="text-3xl font-bold text-[#FFD335]">Admin Tracking Dashboard</h1>
-          <a href="/" className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
+    <div className="min-h-screen bg-gray-950 text-white p-4 lg:p-8">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 border-b border-gray-800 pb-4 gap-4">
+          <h1 className="text-3xl font-bold text-[#FFD335] flex items-center gap-3">
+            📊 Tổng Quan Thống Kê
+            {loading && <span className="text-sm bg-gray-800 text-gray-400 px-2 py-1 rounded animate-pulse">Đang cập nhật...</span>}
+          </h1>
+          <a href="/" className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors whitespace-nowrap">
             ⬅ Trở về trang chính
           </a>
         </div>
 
-        <div className="bg-green-900/20 border border-green-800 rounded-xl p-6 mb-8 text-green-200 flex items-start gap-4">
-          <div className="text-3xl">🟢</div>
-          <div>
-            <h2 className="font-bold text-xl mb-1">Kết nối Vercel KV (Upstash) Thành Công!</h2>
-            <p className="text-sm">
-              Hệ thống đã tự động đẩy toàn bộ sự kiện Tracking của người dùng thật lên DataBase thông qua Serverless Functions. 
-              Giao diện này sẽ tự động tải lại 10 giây/lần để hiện Log mới nhất.
-            </p>
+        {/* 4 Chỉ số chính */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 lg:p-6 shadow-xl">
+            <div className="text-gray-400 text-sm mb-1 font-bold">Lượt truy cập (Unique)</div>
+            <div className="text-3xl lg:text-4xl font-black text-blue-400">{stats.uniqueVisitors || 0}</div>
+          </div>
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 lg:p-6 shadow-xl">
+            <div className="text-gray-400 text-sm mb-1 font-bold">Tổng lượt Roll</div>
+            <div className="text-3xl lg:text-4xl font-black text-green-400">{stats.totalRolls || 0}</div>
+          </div>
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 lg:p-6 shadow-xl">
+            <div className="text-gray-400 text-sm mb-1 font-bold">Tổng thời gian (Phút)</div>
+            <div className="text-3xl lg:text-4xl font-black text-purple-400">{totalTimeInMinutes}</div>
+          </div>
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 lg:p-6 shadow-xl">
+            <div className="text-gray-400 text-sm mb-1 font-bold">Thiết bị</div>
+            <div className="flex gap-4 mt-2">
+              <div className="text-center">
+                <div className="text-xl font-bold text-gray-200">{stats.deviceStats?.Mobile || 0}</div>
+                <div className="text-[10px] text-gray-500 uppercase">Mobile</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-gray-200">{stats.deviceStats?.Desktop || 0}</div>
+                <div className="text-[10px] text-gray-500 uppercase">Desktop</div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden shadow-xl">
-          <div className="p-4 bg-gray-800/50 border-b border-gray-800 font-bold flex justify-between items-center">
-            <span>Lịch sử sự kiện ({logs.length} bản ghi mới nhất)</span>
-            {loading && <span className="text-sm text-gray-400">Đang tải...</span>}
+        {/* Thống kê tiến trình Unlock Theme */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-xl">
+          <h2 className="text-xl font-bold mb-6 text-gray-300 border-b border-gray-800 pb-2">Tiến trình Unlock Skin</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+            {Object.entries(stats.themeUnlocks || {}).sort((a: any, b: any) => b[1] - a[1]).map(([theme, count]: any) => (
+              <div key={theme} className="bg-gray-950 p-4 rounded-lg border border-gray-800 flex items-center justify-between">
+                <div>
+                  <div className="font-bold text-gray-300 capitalize">{theme}</div>
+                  <div className="text-xs text-gray-500 mt-1">Đã rơi ra</div>
+                </div>
+                <div className="text-2xl font-black text-[#FFD335]">{count}</div>
+              </div>
+            ))}
+            {Object.keys(stats.themeUnlocks || {}).length === 0 && (
+              <div className="col-span-full text-gray-500 text-center py-8">Chưa có ai roll trúng skin nào.</div>
+            )}
           </div>
-          <div className="overflow-x-auto max-h-[600px] overflow-y-auto relative">
-            <table className="w-full text-left">
-              <thead className="bg-gray-800/80 text-gray-400 text-sm sticky top-0 backdrop-blur-md">
-                <tr>
-                  <th className="p-4">Thời gian</th>
-                  <th className="p-4">Thiết bị & Vị trí</th>
-                  <th className="p-4">Sự kiện (Event)</th>
-                  <th className="p-4">Chi tiết (Properties)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800">
-                {logs.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="p-8 text-center text-gray-500">
-                      Chưa có dữ liệu log nào
-                    </td>
-                  </tr>
-                ) : logs.map((log, index) => (
-                  <tr key={index} className="hover:bg-gray-800/30 transition-colors">
-                    <td className="p-4 text-gray-400 text-sm whitespace-nowrap align-top">
-                      {new Date(log.time).toLocaleString('vi-VN')}
-                    </td>
-                    <td className="p-4 align-top">
-                      <div className="text-xs text-gray-400 mb-1 max-w-[150px] truncate" title={log.userAgent}>
-                        {log.userAgent}
-                      </div>
-                      <div className="text-xs text-blue-400">
-                        {log.ip} • {log.city !== 'unknown' ? `${log.city}, ` : ''}{log.country}
-                      </div>
-                    </td>
-                    <td className="p-4 font-bold text-blue-400 align-top">
-                      {log.eventName}
-                    </td>
-                    <td className="p-4 text-sm font-mono text-gray-300 align-top">
-                      <pre className="whitespace-pre-wrap max-w-[300px]">
-                        {JSON.stringify(log.properties, null, 2)}
-                      </pre>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        </div>
+        
+        <div className="mt-8 text-center text-xs text-gray-600">
+          Dữ liệu được cập nhật tự động mỗi 10 giây thông qua Vercel Upstash KV.
         </div>
       </div>
     </div>

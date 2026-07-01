@@ -1,8 +1,8 @@
 import { createClient } from '@vercel/kv';
 
 const redis = createClient({
-  url: process.env.KV_REST_API_URL || 'https://powerful-basilisk-106190.upstash.io',
-  token: process.env.KV_REST_API_TOKEN || 'gQAAAAAAAZ7OAAIgcDI3MjU2YmRmZjU2NGM0NTExODI1ZGM2ZjRhYTYxM2JhMw',
+  url: 'https://powerful-basilisk-106190.upstash.io',
+  token: 'gQAAAAAAAZ7OAAIgcDI3MjU2YmRmZjU2NGM0NTExODI1ZGM2ZjRhYTYxM2JhMw',
 });
 
 export default async function handler(req: any, res: any) {
@@ -13,7 +13,7 @@ export default async function handler(req: any, res: any) {
   try {
     const { action, device, theme, seconds } = req.body || {};
     
-    // Lấy thông tin thiết bị và IP (Vercel tự động cung cấp qua headers)
+    // Lấy thông vị thiết bị và IP (Vercel tự động cung cấp qua headers)
     const ip = req.headers['x-real-ip'] || req.headers['x-forwarded-for'] || 'unknown';
 
     if (action === 'session_start') {

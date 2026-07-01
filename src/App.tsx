@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import * as htmlToImage from 'html-to-image'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ThoiGianPage } from './components/ThoiGianPage'
 import { LichTrinhPage } from './components/LichTrinhPage'
 import { HanhTrangPage } from './components/HanhTrangPage'
@@ -8,9 +9,29 @@ import { GachaDashboard } from './components/GachaDashboard'
 import type { ThemeType } from './components/ThemeSelector'
 import { NavigationBar } from './components/NavigationBar'
 import { GACHA_POOL } from './hooks/useGacha'
+import { AdminDashboard } from './components/AdminDashboard'
+
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 700 : -700,
+    opacity: 0
+  }),
+  center: {
+    zIndex: 1,
+    x: 0,
+    opacity: 1
+  },
+  exit: (direction: number) => ({
+    zIndex: 0,
+    x: direction < 0 ? 700 : -700,
+    opacity: 0
+  })
+};
 
 function App() {
+  const [isAdmin, setIsAdmin] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+  const [direction, setDirection] = useState(0);
   const [theme, setTheme] = useState<ThemeType>('memphis');
   const [isCapturing, setIsCapturing] = useState(false);
   const [scale, setScale] = useState(1);
@@ -18,6 +39,12 @@ function App() {
   const [showCardModal, setShowCardModal] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   
+  useEffect(() => {
+    if (window.location.search.includes('admin=admin123')) {
+      setIsAdmin(true);
+    }
+  }, []);
+
   const pages = [
     { name: 'Thời Gian', component: <ThoiGianPage theme={theme} /> },
     { name: 'Lịch Trình', component: <LichTrinhPage theme={theme} /> },
@@ -29,20 +56,34 @@ function App() {
   useEffect(() => {
     const calculateScale = () => {
       const windowWidth = window.innerWidth;
-      // Trừ đi padding của modal
       const availableWidth = windowWidth - 32; 
-      
-      // Giới hạn max scale là 1
       const newScale = Math.min(1, availableWidth / 700);
       setScale(newScale);
     };
 
     calculateScale();
-    // Re-calculate when modal opens just in case
     if (showCardModal) calculateScale();
     window.addEventListener('resize', calculateScale);
     return () => window.removeEventListener('resize', calculateScale);
   }, [showCardModal]);
+
+  const handlePageChange = (index: number) => {
+    setDirection(index > currentPage ? 1 : -1);
+    setCurrentPage(index);
+  };
+
+  const handleDragEnd = (e: any, { offset, velocity }: any) => {
+    const swipe = offset.x;
+    if (swipe < -50) {
+      // vuốt sang trái -> xem trang tiếp theo
+      setDirection(1);
+      setCurrentPage(prev => (prev + 1) % pages.length);
+    } else if (swipe > 50) {
+      // vuốt sang phải -> xem trang trước đó
+      setDirection(-1);
+      setCurrentPage(prev => (prev - 1 + pages.length) % pages.length);
+    }
+  };
 
   const handleCapture = async () => {
     setIsCapturing(true);
@@ -119,6 +160,10 @@ function App() {
 
   const currentThemeData = GACHA_POOL[theme];
 
+  if (isAdmin) {
+    return <AdminDashboard />;
+  }
+
   return (
     <div className={`fixed inset-0 bg-gray-950 flex flex-col lg:flex-row lg:items-start lg:justify-center p-0 lg:py-12 lg:px-8 lg:gap-12 overflow-y-auto overflow-x-hidden ${isShaking ? 'animate-shake' : ''}`}>
       
@@ -178,7 +223,7 @@ function App() {
           <NavigationBar 
             pages={pages} 
             currentPage={currentPage} 
-            setCurrentPage={setCurrentPage}
+            setCurrentPage={handlePageChange}
           />
           
           <div 
@@ -207,8 +252,28 @@ function App() {
                 </div>
               )}
               
-              <div className="w-[700px] h-[990px] relative">
-                {pages[currentPage].component}
+              <div className="w-[700px] h-[990px] relative overflow-hidden">
+                <AnimatePresence initial={false} custom={direction}>
+                  <motion.div
+                    key={currentPage}
+                    custom={direction}
+                    variants={slideVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{
+                      x: { type: "spring", stiffness: 300, damping: 30 },
+                      opacity: { duration: 0.2 }
+                    }}
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={1}
+                    onDragEnd={handleDragEnd}
+                    className="absolute inset-0 cursor-grab active:cursor-grabbing"
+                  >
+                    {pages[currentPage].component}
+                  </motion.div>
+                </AnimatePresence>
               </div>
             </div>
           </div>
@@ -227,3 +292,4 @@ function App() {
 }
 
 export default App
+

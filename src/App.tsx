@@ -45,22 +45,25 @@ function App() {
   }, [showCardModal]);
 
   const handleCapture = async () => {
-    const element = document.getElementById('screenshot-area');
-    if (!element) return;
-    
     setIsCapturing(true);
-    // Timeout nhỏ để DOM cập nhật trạng thái
+    // Timeout để DOM cập nhật trạng thái
     setTimeout(async () => {
+      const element = document.getElementById('screenshot-area');
+      if (!element) {
+        setIsCapturing(false);
+        return;
+      }
+      
       try {
-        const originalTransform = element.style.transform;
-        element.style.transform = 'scale(1)';
-        
         const dataUrl = await htmlToImage.toPng(element, { 
-          pixelRatio: 3, 
+          pixelRatio: 2, 
           backgroundColor: '#000000',
+          style: {
+            transform: 'none',
+          },
+          width: 700,
+          height: 1110
         });
-        
-        element.style.transform = originalTransform;
         
         if (dataUrl) {
           try {
@@ -80,7 +83,7 @@ function App() {
       } finally {
         setIsCapturing(false);
       }
-    }, 100);
+    }, 500);
   };
 
   const handleRollAction = () => {

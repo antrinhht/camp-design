@@ -213,10 +213,17 @@ export const GachaDashboard = ({ theme, setTheme, onRollAction, onViewCard }: Ga
                   {item.name}
                 </div>
                 <div className="text-[9px] lg:text-[10px] mt-0.5 text-gray-400">
-                  {isUnlocked ? item.rarity : item.rarity}
+                  {item.rarity}
                 </div>
                 {!isUnlocked && (
-                  <div className="absolute top-2 right-2 text-gray-600 text-xs">🔒</div>
+                  <div className="absolute top-2 right-2 flex items-center gap-1 text-gray-600">
+                    {item.pity > 0 && (
+                      <span className="text-[9px] font-mono tracking-tighter bg-gray-900/50 px-1 rounded-sm border border-gray-700/50 shadow-inner">
+                        {Math.min(totalRolls, item.pity)}/{item.pity}
+                      </span>
+                    )}
+                    <span className="text-xs">🔒</span>
+                  </div>
                 )}
               </button>
             );

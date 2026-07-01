@@ -12,8 +12,10 @@ const getDeviceType = () => {
 };
 
 // Hook theo dõi thao tác người dùng (Gửi tổng hợp lên Vercel Serverless Function -> Upstash Redis)
-export const useTracking = () => {
+export const useTracking = (disabled: boolean = false) => {
   useEffect(() => {
+    if (disabled) return;
+    
     const sendEvent = async (payload: any) => {
       try {
         await fetch('/api/track', {
@@ -39,10 +41,11 @@ export const useTracking = () => {
     }, 10000);
 
     return () => clearInterval(pingInterval);
-  }, []);
+  }, [disabled]);
 
   // 3. Theo dõi lượt quay thẻ bài
   const trackRoll = async (themeRolled: string) => {
+    if (disabled) return;
     try {
       await fetch('/api/track', {
         method: 'POST',

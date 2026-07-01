@@ -161,12 +161,12 @@ function App() {
 
   const currentThemeData = GACHA_POOL[theme];
 
+  // Khởi tạo tracking
+  const { trackRoll } = useTracking(isAdmin);
+
   if (isAdmin) {
     return <AdminDashboard />;
   }
-
-  // Khởi tạo tracking (chỉ chạy khi không phải admin)
-  const { trackRoll } = useTracking();
 
   return (
     <div className={`fixed inset-0 bg-gray-950 flex flex-col lg:flex-row lg:items-start lg:justify-center p-0 lg:py-12 lg:px-8 lg:gap-12 overflow-y-auto overflow-x-hidden ${isShaking ? 'animate-shake' : ''}`}>

@@ -72,7 +72,7 @@ function App() {
     setCurrentPage(index);
   };
 
-  const handleDragEnd = (e: any, { offset, velocity }: any) => {
+  const handleDragEnd = (_e: any, { offset }: any) => {
     const swipe = offset.x;
     if (swipe < -50) {
       // vuốt sang trái -> xem trang tiếp theo

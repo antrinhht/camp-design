@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 export const AdminDashboard = () => {
   const [logs, setLogs] = useState<any[]>([]);

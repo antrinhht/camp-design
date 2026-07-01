@@ -58,13 +58,19 @@ function App() {
       try {
         const originalTransform = element.style.transform;
         const originalTransition = element.style.transition;
-        const originalContainerWidth = container.style.width;
-        const originalContainerHeight = container.style.height;
+        const originalPosition = element.style.position;
+        const originalTop = element.style.top;
+        const originalLeft = element.style.left;
+        const originalMargin = element.style.margin;
+        const originalZIndex = element.style.zIndex;
 
         element.style.transition = 'none';
         element.style.transform = 'scale(1)';
-        container.style.width = '700px';
-        container.style.height = '1110px';
+        element.style.position = 'fixed';
+        element.style.top = '0px';
+        element.style.left = '0px';
+        element.style.margin = '0px';
+        element.style.zIndex = '99999';
 
         // Đợi DOM áp dụng layout mới
         await new Promise(r => setTimeout(r, 100));
@@ -79,8 +85,11 @@ function App() {
         // Trả lại DOM như cũ
         element.style.transform = originalTransform;
         element.style.transition = originalTransition;
-        container.style.width = originalContainerWidth;
-        container.style.height = originalContainerHeight;
+        element.style.position = originalPosition;
+        element.style.top = originalTop;
+        element.style.left = originalLeft;
+        element.style.margin = originalMargin;
+        element.style.zIndex = originalZIndex;
 
         if (dataUrl) {
           try {

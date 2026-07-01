@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv';
+import { redis } from './redis';
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
@@ -13,22 +13,22 @@ export default async function handler(req: any, res: any) {
 
     if (action === 'session_start') {
       // SADD trả về 1 nếu IP mới, 0 nếu đã tồn tại
-      const added = await kv.sadd('unique_visitors', ip);
+      const added = await redis.sadd('unique_visitors', ip);
       if (added === 1 && device) {
-        await kv.hincrby('device_stats', device, 1);
+        await redis.hincrby('device_stats', device, 1);
       }
     } else if (action === 'roll') {
-      await kv.incr('total_rolls');
+      await redis.incr('total_rolls');
       if (theme) {
-        await kv.hincrby('theme_unlocks', theme, 1);
+        await redis.hincrby('theme_unlocks', theme, 1);
       }
     } else if (action === 'ping') {
-      await kv.incrby('total_time_spent', seconds || 0);
+      await redis.incrby('total_time_spent', seconds || 0);
     }
 
     return res.status(200).json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Tracking Error:', error);
-    return res.status(500).json({ error: 'Failed to track event' });
+    return res.status(500).json({ error: 'Failed to track event', message: error.message || String(error) });
   }
 }

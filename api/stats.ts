@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv';
+import { redis } from './redis';
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'GET') {
@@ -6,11 +6,11 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const uniqueVisitors = await kv.scard('unique_visitors') || 0;
-    const deviceStats = await kv.hgetall('device_stats') || {};
-    const totalRolls = await kv.get('total_rolls') || 0;
-    const themeUnlocks = await kv.hgetall('theme_unlocks') || {};
-    const totalTimeSpent = await kv.get('total_time_spent') || 0;
+    const uniqueVisitors = await redis.scard('unique_visitors') || 0;
+    const deviceStats = await redis.hgetall('device_stats') || {};
+    const totalRolls = await redis.get('total_rolls') || 0;
+    const themeUnlocks = await redis.hgetall('theme_unlocks') || {};
+    const totalTimeSpent = await redis.get('total_time_spent') || 0;
 
     return res.status(200).json({
       uniqueVisitors,
@@ -19,8 +19,8 @@ export default async function handler(req: any, res: any) {
       themeUnlocks,
       totalTimeSpent
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Fetch Stats Error:', error);
-    return res.status(500).json({ error: 'Failed to fetch stats' });
+    return res.status(500).json({ error: 'Failed to fetch stats', message: error.message || String(error) });
   }
 }
